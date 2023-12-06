@@ -200,12 +200,28 @@ class EnrollmentAPI(Resource):
         except:
             return make_response("",500)
         return make_response(json.dumps([{"enrollment_id":e.enrollment_id,"course_id":e.ecourse_id,"student_id":e.estudent_id}]),200)
+    def delete(self,sid,cid):
+        try:
+            s=Student.query.get_or_404(sid)
+        except:
+            raise EnrollmentValidationError(status_code=400,error_code="ENROLLMENT002",error_message="Student does not exist")
+        try:
+            c=Course.query.get_or_404(cid)
+        except:
+            raise EnrollmentValidationError(status_code=400,error_code="ENROLLMENT001",error_message="Course does not exist")            
         
+        e=Enrollment.query.filter_by(estudent_id=sid).all()
+        if len(e)==0:
+            raise NotFoundError(status_code=404,error_message="Student is not enrolled in any course")
+        else:
             
-        
+            e=Enrollment.query.filter_by(estudent_id=sid,ecourse_id=cid).first()
+            
+            db.session.delete(e)
+            db.session.commit()
+            return make_response("",200)
+            
 
-        
-        
         
 api.add_resource(CourseAPI,"/api/course/<int:id>","/api/course")
 api.add_resource(StudentAPI,"/api/student","/api/student/<int:id>")
